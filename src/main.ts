@@ -14,7 +14,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // remove as propriedades que não estão no DTO
+      whitelist: true, // se true remove as propriedades que não estão no DTO
+      transform: true, // se true transforma os dados para o tipo definido no DTO
     }),
   );
   await app.listen(process.env.PORT ?? 3000);
