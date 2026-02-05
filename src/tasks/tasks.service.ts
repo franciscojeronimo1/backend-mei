@@ -1,8 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Task } from './entites/task.entitys';
+import { Task } from './entites/task.entitys.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 
 @Injectable()
 export class TasksService {
+  constructor(private prisma: PrismaService) {}
   private tasks: Task[] = [
     {
       id: 1,
@@ -12,16 +14,19 @@ export class TasksService {
     },
   ];
 
-  findAll() {
-    return this.tasks;
+  async findAll() {
+    const allTasks = await this.prisma.task.findMany();
+    return allTasks;
   }
 
-  findOne(id: number) {
-    const task = this.tasks.find((task) => task.id === id);
-    if (task) return task;
+  async findOne(id: number) {
+    const task = await this.prisma.task.findUnique({
+      where: { id },
+    });
+
+    if (task?.name) return task;
 
     throw new HttpException('Tarefa não encontrada', HttpStatus.NOT_FOUND);
-    //throw new NotFoundException('Tarefa não encontrada');
   }
 
   create(body: any) {
