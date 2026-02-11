@@ -1,6 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Task } from './entites/task.entitys.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { CreateTaskDto } from './dto/create-task.dto.js';
+import { UpdateTaskDto } from './dto/update-task.dto.js';
 
 @Injectable()
 export class TasksService {
@@ -29,42 +31,50 @@ export class TasksService {
     throw new HttpException('Tarefa não encontrada', HttpStatus.NOT_FOUND);
   }
 
-  create(body: any) {
-    const newId = this.tasks.length + 1;
-    //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const newTask = {
-      id: newId,
-      ...body,
-    };
-    this.tasks.push(newTask);
-    //eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  async create(CreateTaskDto: CreateTaskDto) {
+    const newTask = await this.prisma.task.create({
+      data: {
+        name: CreateTaskDto.name,
+        description: CreateTaskDto.description,
+        completed: false,
+      },
+    });
     return newTask;
   }
 
-  update(id: number, body: any) {
-    const taskIndex = this.tasks.findIndex((task) => task.id === id);
-
-    if (taskIndex < 0) {
+  async update(id: number, updateTaskDto: UpdateTaskDto) {
+    const findTask = await this.prisma.task.findFirst({
+      where: {
+        id: id,
+      },
+    });
+    if (!findTask) {
       throw new HttpException('Tarefa não encontrada', HttpStatus.NOT_FOUND);
     }
-    const taskItem = this.tasks[taskIndex];
-    //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    this.tasks[taskIndex] = {
-      ...taskItem,
-      ...body,
-    };
 
-    return this.tasks[taskIndex];
+    const task = await this.prisma.task.update({
+      where: {
+        id: findTask.id,
+      },
+      data: updateTaskDto,
+    });
+    return task;
   }
 
-  delete(id: number) {
-    const taskIndex = this.tasks.findIndex((task) => task.id === Number(id));
-    if (taskIndex < 0) {
+  async delete(id: number) {
+    const findTask = await this.prisma.task.findFirst({
+      where: {
+        id: id,
+      },
+    });
+    if (!findTask) {
       throw new HttpException('Tarefa não encontrada', HttpStatus.NOT_FOUND);
     }
-    this.tasks.splice(taskIndex, 1);
-    return {
-      message: 'Tarefa deletada com sucesso',
-    };
+    await this.prisma.task.delete({
+      where: {
+        id: findTask.id,
+      },
+    });
+    return { message: 'Tarefa deletada com sucesso' };
   }
 }
