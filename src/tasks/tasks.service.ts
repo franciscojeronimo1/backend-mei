@@ -1,23 +1,23 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Task } from './entites/task.entitys.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 import { UpdateTaskDto } from './dto/update-task.dto.js';
+import { PaginationDto } from '../common/dto/pagination.dto.js';
 
 @Injectable()
 export class TasksService {
   constructor(private prisma: PrismaService) {}
-  private tasks: Task[] = [
-    {
-      id: 1,
-      name: 'comprar pão',
-      description: 'comprar pão',
-      completed: false,
-    },
-  ];
 
-  async findAll() {
-    const allTasks = await this.prisma.task.findMany();
+  async findAll(paginationDto?: PaginationDto) {
+    const limit = paginationDto?.limit ?? 5;
+    const offset = paginationDto?.offset ?? 0;
+    const allTasks = await this.prisma.task.findMany({
+      take: limit,
+      skip: offset,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
     return allTasks;
   }
 
